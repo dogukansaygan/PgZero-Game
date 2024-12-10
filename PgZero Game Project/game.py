@@ -5,9 +5,11 @@ WIDTH = 720
 HEIGHT = 480
 
 current_level = 1
+win = False  # Kazanma durumu kontrolü
+game_over = False  # Kaybetme durumu kontrolü
 
-player = Actor("mysmile1", (WIDTH / 2, HEIGHT / 2))
-player.images = ["mysmile1", "mysmile2"]
+player = Actor("myslime1", (WIDTH / 2, HEIGHT / 2))
+player.images = ["myslime1", "myslime2"]
 player.frame_index = 0
 player.animation_speed = 5
 player.animation_counter = 0
@@ -33,7 +35,6 @@ total_coins_count = 5
 
 game_started = False
 game_music_enabled = True
-game_over = False
 gate_visible = False
 
 def generate_coins():
@@ -47,6 +48,14 @@ def generate_coins():
 
 def draw():
     screen.fill((0, 0, 0))
+    
+    if win:  # Kazanma ekranı
+        screen.draw.text("Tebrikler! Oyunu Kazandınız!", center=(WIDTH / 2, HEIGHT / 2), fontsize=50, color="green")
+        return
+    
+    if game_over:  # Kaybetme ekranı
+        screen.draw.text("Kaybettin!", center=(WIDTH / 2, HEIGHT / 2), fontsize=50, color="red")
+        return
     
     player.draw()
     enemy.draw()
@@ -82,10 +91,9 @@ def on_mouse_down(pos):
             quit()
 
 def update():
-    global total_coins_collected, game_over, gate_visible, current_level
+    global total_coins_collected, game_over, gate_visible, current_level, win
 
-    if game_over:
-        pgzrun.quit()
+    if win or game_over:  # Kazanma veya kaybetme durumu
         return
     
     moving = False
@@ -103,7 +111,7 @@ def update():
         if keyboard.down:
             player.y += 5
             moving = True
-       
+    
     player.animation_counter += 1
     if player.animation_counter >= player.animation_speed:
         player.frame_index = (player.frame_index + 1) % len(player.images)
@@ -127,12 +135,15 @@ def update():
         gate.visible = False
         generate_coins()
         total_coins_collected = 0
+        
+        if current_level == 5:  # Kazanma kontrolü
+            win = True
     
     if game_started:
         move_enemy()
     
     if player.colliderect(enemy):
-        restart_game()
+        game_over = True  # Oyunu kaybetme durumu
 
 def move_enemy():
     if enemy.x < player.x:
@@ -150,16 +161,6 @@ def move_enemy():
         enemy.frame_index = (enemy.frame_index + 1) % len(enemy.images)
         enemy.image = enemy.images[enemy.frame_index]
         enemy.animation_counter = 0
-
-def restart_game():
-    global coins, total_coins_collected, player, enemy, game_started, current_level, gate_visible
-    generate_coins()
-    total_coins_collected = 0
-    player.x, player.y = WIDTH / 2, HEIGHT / 2
-    enemy.x, enemy.y = WIDTH / 4, HEIGHT / 4
-    current_level = 0
-    gate_visible = False
-    game_started = False
 
 generate_coins()
 if game_music_enabled:
